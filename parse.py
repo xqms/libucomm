@@ -225,7 +225,7 @@ class Parser:
 
 		print '#include <stdint.h>'
 		print '#include <stdlib.h>'
-		print '#include "list.h"'
+		print '#include <list.h>'
 		print
 		print 'template<class IO>'
 		print 'class Proto'

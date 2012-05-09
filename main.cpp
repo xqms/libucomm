@@ -1,6 +1,7 @@
 // Test
 
 #include "test.h"
+#include "envelope.h"
 #include <stdio.h>
 
 class SimpleIOHandler
@@ -22,7 +23,40 @@ public:
 	}
 };
 
-typedef uc::IO<SimpleIOHandler, uc::IO_W> SimpleWriter;
+class DebugCharIO
+{
+public:
+	bool writeChar(uint8_t c)
+	{
+		printf("write: 0x%02X\n", c);
+		return true;
+	}
+};
+
+class ModSumGenerator
+{
+public:
+	void add(uint8_t c)
+	{
+		m_value += c;
+	}
+
+	void reset()
+	{
+		m_value = 0;
+	}
+
+	uint8_t value() const
+	{
+		return m_value;
+	}
+private:
+	uint8_t m_value;
+};
+
+typedef uc::EnvelopeWriter<DebugCharIO, ModSumGenerator> EnvelopeWriter;
+
+typedef uc::IO<EnvelopeWriter, uc::IO_W> SimpleWriter;
 typedef Proto<SimpleWriter> WProto;
 
 template<class SizeType>
@@ -40,6 +74,8 @@ int main()
 	pkt.flags = 0;
 	pkt.cmds.setCallback(fillServoCommands, 4);
 
-	SimpleIOHandler output;
+	EnvelopeWriter output;
+	output.startEnvelope(0);
 	pkt.serialize(&output);
+	output.endEnvelope();
 }
