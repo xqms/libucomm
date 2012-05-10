@@ -5,7 +5,7 @@ struct ServoCommand
 	uint16_t command;
 };
 
-struct ServoPacket
+msg ServoPacket
 {
 	ServoCommand cmds[];
 	uint8_t flags;

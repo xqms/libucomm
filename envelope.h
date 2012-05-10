@@ -5,6 +5,7 @@
 #define LIBUCOMM_ENEVELOPE_H
 
 #include <stdint.h>
+#include <string.h>
 #include "util/error.h"
 #include "util/integers.h"
 
@@ -22,18 +23,29 @@
 namespace uc
 {
 
-template<class CharIO, class ChecksumGenerator>
-class EnvelopeWriter : public CharIO
+class CharWriter
+{
+public:
+	virtual bool writeChar(uint8_t c) = 0;
+};
+
+template<class ChecksumGenerator>
+class EnvelopeWriter
 {
 public:
 	class Reader
 	{
 	};
 
+	EnvelopeWriter(CharWriter* charWriter)
+	 : m_charWriter(charWriter)
+	{
+	}
+
 	bool startEnvelope(uint8_t msg_code)
 	{
-		RETURN_IF_ERROR(CharIO::writeChar(0xFF));
-		RETURN_IF_ERROR(CharIO::writeChar(msg_code));
+		RETURN_IF_ERROR(m_charWriter->writeChar(0xFF));
+		RETURN_IF_ERROR(m_charWriter->writeChar(msg_code));
 
 		m_checksum.reset();
 		m_checksum.add(msg_code);
@@ -44,9 +56,9 @@ public:
 		for(size_t i = 0; i < size; ++i)
 		{
 			uint8_t c = ((const uint8_t*)data)[i];
-			RETURN_IF_ERROR(CharIO::writeChar(c));
+			RETURN_IF_ERROR(m_charWriter->writeChar(c));
 			if(c == 0xFF)
-				RETURN_IF_ERROR(CharIO::writeChar(0));
+				RETURN_IF_ERROR(m_charWriter->writeChar(0));
 
 			m_checksum.add(c);
 		}
@@ -56,19 +68,66 @@ public:
 
 	bool endEnvelope()
 	{
-		RETURN_IF_ERROR(CharIO::writeChar(0xFF));
-		RETURN_IF_ERROR(CharIO::writeChar(0xFD));
-		RETURN_IF_ERROR(CharIO::writeChar(m_checksum.value()));
+		RETURN_IF_ERROR(m_charWriter->writeChar(0xFF));
+		RETURN_IF_ERROR(m_charWriter->writeChar(0xFD));
+		RETURN_IF_ERROR(m_charWriter->writeChar(m_checksum.value()));
+	}
+
+	template<class MSG>
+	EnvelopeWriter<ChecksumGenerator>& operator<< (const MSG& msg)
+	{
+		startEnvelope(MSG::MSG_CODE);
+		msg.serialize(this);
+		endEnvelope();
+
+		return *this;
 	}
 private:
+	CharWriter* m_charWriter;
 	ChecksumGenerator m_checksum;
 };
 
-template<class CharIO, class ChecksumGenerator, int MaxPacketSize>
-class EnvelopeReader : public CharIO
+template<class ChecksumGenerator, int MaxPacketSize>
+class EnvelopeReader
 {
 public:
 	typedef typename IntForSize<MaxPacketSize>::Type SizeType;
+
+	class Reader
+	{
+	public:
+		Reader()
+		{
+		}
+
+		Reader(EnvelopeReader* envReader)
+		 : m_envReader(envReader)
+		 , m_idx(0)
+		{
+		}
+
+		bool read(void* data, size_t size)
+		{
+			if(m_idx + size > m_envReader->m_idx)
+				return false;
+
+			memcpy(data, m_envReader->m_buffer + m_idx, size);
+			m_idx += size;
+		}
+
+		bool skip(size_t size)
+		{
+			if(m_idx + size > m_envReader->m_idx)
+				return false;
+
+			m_idx += size;
+		}
+	private:
+		EnvelopeReader* m_envReader;
+		SizeType m_idx;
+	};
+
+	friend class Reader;
 
 	EnvelopeReader()
 	 : m_state(STATE_START1)
@@ -121,6 +180,7 @@ public:
 				if(c == 0xFD)
 				{
 					m_state = STATE_CHECKSUM;
+					break;
 				}
 
 				// Start-of-Packet detetected
@@ -132,14 +192,36 @@ public:
 			case STATE_CHECKSUM:
 				if(c == m_generator.value())
 				{
-					// Packet detected
+					return true;
 				}
-				else if(c == 0xFF)
-					m_state = STATE_START2;
 				else
-					m_state = STATE_START1;
+				{
+					if(c == 0xFF)
+						m_state = STATE_START2;
+					else
+						m_state = STATE_START1;
+				}
 				break;
 		}
+
+		return false;
+	}
+
+	uint8_t msgCode() const
+	{ return m_msgCode; }
+
+	inline Reader makeReader()
+	{
+		return Reader(this);
+	}
+
+	template<class MSG>
+	EnvelopeReader<ChecksumGenerator, MaxPacketSize>& operator>>(MSG& msg)
+	{
+		Reader reader = makeReader();
+		msg.deserialize(&reader);
+
+		return *this;
 	}
 private:
 	enum State

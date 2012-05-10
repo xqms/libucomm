@@ -24,6 +24,7 @@ class IOInstance
 {
 public:
 	typedef _IO IO;
+	typedef typename IO::Reader Reader;
 	enum { IsLast = _IsLast };
 };
 

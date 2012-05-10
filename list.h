@@ -14,7 +14,16 @@ namespace uc
 {
 
 template<class IOI, class T, int Size=255, class Enable=void>
-class List;
+class List
+{
+public:
+	typedef typename IntForSize<Size>::Type SizeType;
+	typedef bool (*Callback)(T* dest, SizeType idx);
+
+	bool next(T* dest);
+	void setData(T* data, SizeType size);
+	void setCallback(Callback cb, SizeType size);
+};
 
 template<class IOI, class T, int Size>
 class List<IOI, T, Size, typename enable_if<IOI::IO::Mode::IsReadable>::Type >

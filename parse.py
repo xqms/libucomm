@@ -82,7 +82,7 @@ registerParseAction(Member)
 
 class Struct:
 	grammar = (
-		  Suppress('struct')
+		  (Literal('struct') | Literal('msg'))('type')
 		+ Identifier.grammar("name")
 		+ Suppress('{')
 		+ ZeroOrMore(Member.grammar)("members")
@@ -90,12 +90,16 @@ class Struct:
 		+ Suppress(';')
 	)
 
-	def __init__(self, name, members):
+	def __init__(self, type, name, members):
+		self.type = type
 		self.name = name
 		self.members = list(members)
 
 	def __str__(self):
 		return self.name
+
+	def setMsgID(self, id):
+		self.msgID = id
 
 	def definition(self):
 		code = [
@@ -108,6 +112,15 @@ class Struct:
 			'\t};',
 			'',
 		]
+
+		if self.type == 'msg':
+			code += [
+				'\tenum',
+				'\t{',
+				'\t\tMSG_CODE = %d' % self.msgID,
+				'\t};',
+				'',
+			]
 
 		if self.podMembers:
 			code += [
@@ -200,7 +213,7 @@ class Struct:
 
 	@classmethod
 	def parse(cls, parse_result):
-		return cls(parse_result.name, parse_result.members)
+		return cls(parse_result.type, parse_result.name, parse_result.members)
 registerParseAction(Struct)
 
 
@@ -232,8 +245,15 @@ class Parser:
 		print '{'
 		print 'public:'
 
+		msg_counter = 0
+
 		for struct in ret:
 			struct.resolveTypes(types)
+
+			if struct.type == 'msg':
+				struct.setMsgID(msg_counter)
+				msg_counter += 1
+
 			print struct.definition() + "\n"
 
 		print '};'
