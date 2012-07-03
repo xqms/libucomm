@@ -58,7 +58,7 @@ public:
 			uint8_t c = ((const uint8_t*)data)[i];
 			RETURN_IF_ERROR(m_charWriter->writeChar(c));
 			if(c == 0xFF)
-				RETURN_IF_ERROR(m_charWriter->writeChar(0));
+				RETURN_IF_ERROR(m_charWriter->writeChar(0xFE));
 
 			m_checksum.add(c);
 		}
