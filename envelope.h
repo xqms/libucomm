@@ -149,6 +149,7 @@ public:
 					m_idx = 0;
 					m_state = STATE_DATA;
 					m_generator.reset();
+					m_generator.add(c);
 				}
 				break;
 			case STATE_DATA:
