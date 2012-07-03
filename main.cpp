@@ -2,26 +2,8 @@
 
 #include "test.h"
 #include "envelope.h"
+#include "checksum.h"
 #include <stdio.h>
-
-class SimpleIOHandler
-{
-public:
-	class Reader
-	{
-	};
-
-	bool write(const void* data, size_t size)
-	{
-		printf("write:");
-
-		for(size_t i = 0; i < size; ++i)
-			printf(" %02X", ((const uint8_t*)data)[i]);
-		printf("\n");
-
-		return true;
-	}
-};
 
 const int BUFSIZE = 1024;
 
@@ -57,33 +39,12 @@ private:
 	uint8_t m_writeIdx;
 };
 
-class ModSumGenerator
-{
-public:
-	void add(uint8_t c)
-	{
-		m_value += c;
-	}
-
-	void reset()
-	{
-		m_value = 0;
-	}
-
-	uint8_t value() const
-	{
-		return m_value;
-	}
-private:
-	uint8_t m_value;
-};
-
-typedef uc::EnvelopeWriter<ModSumGenerator> EnvelopeWriter;
+typedef uc::EnvelopeWriter<uc::InvertedModSumGenerator> EnvelopeWriter;
 
 typedef uc::IO<EnvelopeWriter, uc::IO_W> SimpleWriter;
 typedef Proto<SimpleWriter> WProto;
 
-typedef uc::EnvelopeReader<ModSumGenerator, 1024> EnvelopeReader;
+typedef uc::EnvelopeReader<uc::InvertedModSumGenerator, 1024> EnvelopeReader;
 typedef uc::IO<EnvelopeReader, uc::IO_R> SimpleReader;
 typedef Proto<SimpleReader> RProto;
 
@@ -104,7 +65,7 @@ int main()
 
 	DebugCharIO dbg;
 	EnvelopeWriter output(&dbg);
-	output << pkt;
+	output << pkt << pkt;
 
 	EnvelopeReader input;
 	while(dbg.isDataAvailable())
