@@ -29,7 +29,7 @@ public:
 	virtual bool writeChar(uint8_t c) = 0;
 };
 
-template<class ChecksumGenerator>
+template<class ChecksumGenerator, class CharWriterType = CharWriter>
 class EnvelopeWriter
 {
 public:
@@ -37,7 +37,7 @@ public:
 	{
 	};
 
-	EnvelopeWriter(CharWriter* charWriter)
+	EnvelopeWriter(CharWriterType* charWriter)
 	 : m_charWriter(charWriter)
 	{
 	}
@@ -74,7 +74,7 @@ public:
 	}
 
 	template<class MSG>
-	EnvelopeWriter<ChecksumGenerator>& operator<< (const MSG& msg)
+	EnvelopeWriter<ChecksumGenerator, CharWriterType>& operator<< (const MSG& msg)
 	{
 		startEnvelope(MSG::MSG_CODE);
 		msg.serialize(this);
@@ -83,7 +83,7 @@ public:
 		return *this;
 	}
 private:
-	CharWriter* m_charWriter;
+	CharWriterType* m_charWriter;
 	ChecksumGenerator m_checksum;
 };
 
