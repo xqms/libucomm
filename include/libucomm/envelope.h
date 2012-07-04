@@ -193,6 +193,7 @@ public:
 			case STATE_CHECKSUM:
 				if(c == m_generator.value())
 				{
+					m_state = STATE_START1;
 					return true;
 				}
 				else
