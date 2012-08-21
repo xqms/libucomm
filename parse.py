@@ -229,8 +229,17 @@ class Parser:
 	def __init__(self, grammar):
 		self.grammar = grammar
 
-	def parse(self, f):
-		ret = self.grammar.document.parseString(f, True)
+	def parse(self, string):
+		# Strip comments
+		content = ""
+		for line in string.split('\n'):
+			pos = line.find('//')
+			if pos < 0:
+				content += line + '\n'
+			else:
+				content += line[0:pos] + '\n'
+
+		ret = self.grammar.document.parseString(content, True)
 
 		types = {}
 
