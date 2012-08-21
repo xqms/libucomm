@@ -3,7 +3,11 @@ from pyparsing import *
 
 BUILTIN_TYPES = {
 	'uint8_t': 1,
+	'int8_t': 1,
 	'uint16_t': 2,
+	'int16_t': 2,
+	'uint32_t': 4,
+	'int32_t': 4,
 }
 
 def registerParseAction(cls):
