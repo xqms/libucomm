@@ -119,7 +119,7 @@ Reading data
 	while(1)
 	{
 		uint8_t byte = ...; // Got some input!
-		if(input.take(byte))
+		if(input.take(byte) == EnvelopeReader::NEW_MESSAGE)
 		{
 			// We got a message
 			switch(input.msgCode())

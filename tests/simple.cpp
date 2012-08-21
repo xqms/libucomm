@@ -45,7 +45,7 @@ int main()
 	EnvelopeReader input;
 	while(dbg.isCharAvailable())
 	{
-		if(input.take(dbg.getChar()))
+		if(input.take(dbg.getChar()) == EnvelopeReader::NEW_MESSAGE)
 		{
 			ASSERT_EQUAL(input.msgCode(), RProto::Message::MSG_CODE);
 

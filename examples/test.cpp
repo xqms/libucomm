@@ -70,7 +70,7 @@ int main()
 	EnvelopeReader input;
 	while(dbg.isDataAvailable())
 	{
-		if(input.take(dbg.getc()))
+		if(input.take(dbg.getc()) == EnvelopeReader::NEW_MESSAGE)
 		{
 			if(input.msgCode() == RProto::ServoPacket::MSG_CODE)
 			{

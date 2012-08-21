@@ -134,6 +134,13 @@ public:
 	{
 	}
 
+	enum TakeResult
+	{
+		NEW_MESSAGE,
+		NEED_MORE_DATA,
+		CHECKSUM_ERROR
+	};
+
 	bool take(uint8_t c)
 	{
 		switch(m_state)
@@ -194,7 +201,7 @@ public:
 				if(c == m_generator.value())
 				{
 					m_state = STATE_START1;
-					return true;
+					return NEW_MESSAGE;
 				}
 				else
 				{
@@ -202,11 +209,13 @@ public:
 						m_state = STATE_START2;
 					else
 						m_state = STATE_START1;
+
+					return CHECKSUM_ERROR;
 				}
 				break;
 		}
 
-		return false;
+		return NEED_MORE_DATA;
 	}
 
 	uint8_t msgCode() const
