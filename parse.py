@@ -84,6 +84,31 @@ class Member:
 		return cls(parse_result.type, parse_result.name, array)
 registerParseAction(Member)
 
+class Custom:
+	content = Forward()
+	content << (
+		  (CharsNotIn('{}'))
+		| (Literal('{') + ZeroOrMore(content) + Literal('}'))
+	)
+
+	grammar = (
+		Suppress('custom')
+		+ Suppress('{')
+		+ ZeroOrMore(content)
+		+ Suppress('}')
+	)
+
+	def __init__(self, content):
+		self.content = content
+
+	def __str__(self):
+		return ' '.join(self.content)
+
+	@classmethod
+	def parse(cls, parse_result):
+		return cls(parse_result)
+registerParseAction(Custom)
+
 class Struct:
 	grammar = (
 		  (Literal('struct') | Literal('msg'))('type')
@@ -223,7 +248,7 @@ registerParseAction(Struct)
 
 class Grammar:
 	def __init__(self):
-		self.document = ZeroOrMore(Struct.grammar)
+		self.document = ZeroOrMore(Struct.grammar | Custom.grammar)
 
 class Parser:
 	def __init__(self, grammar):
@@ -243,7 +268,10 @@ class Parser:
 
 		types = {}
 
-		for struct in ret:
+		structs = [ s for s in ret if isinstance(s, Struct) ]
+		custom_areas = [ s for s in ret if isinstance(s, Custom) ]
+
+		for struct in structs:
 			if struct.name in types:
 				raise RuntimeError, "Struct '%s' is defined multiple times" % struct.name
 
@@ -253,6 +281,13 @@ class Parser:
 		print '#include <stdlib.h>'
 		print '#include <libucomm/list.h>'
 		print
+
+		print '// Start custom area'
+		for custom in custom_areas:
+			print custom
+		print '// End custom area'
+		print
+
 		print 'template<class IO>'
 		print 'class Proto'
 		print '{'
@@ -260,7 +295,7 @@ class Parser:
 
 		msg_counter = 0
 
-		for struct in ret:
+		for struct in structs:
 			struct.resolveTypes(types)
 
 			if struct.type == 'msg':
