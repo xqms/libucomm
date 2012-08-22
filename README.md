@@ -59,7 +59,7 @@ First some handy typedefs (you can see the flexibility here):
 
 Setting up I/O:
 
-	class MyWriter
+	class MyWriter : public uc::CharWriter
 	{
 	public:
 		bool writeChar(uint8_t c)
