@@ -49,6 +49,8 @@ public:
 
 		m_checksum.reset();
 		m_checksum.add(msg_code);
+
+		return true;
 	}
 
 	bool write(const void* data, size_t size)
@@ -71,6 +73,8 @@ public:
 		RETURN_IF_ERROR(m_charWriter->writeChar(0xFF));
 		RETURN_IF_ERROR(m_charWriter->writeChar(0xFD));
 		RETURN_IF_ERROR(m_charWriter->writeChar(m_checksum.value()));
+
+		return true;
 	}
 
 	template<class MSG>
