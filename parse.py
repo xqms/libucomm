@@ -36,11 +36,11 @@ class Member:
 		self.array = array
 
 	def isPOD(self):
-		if self.type in BUILTIN_TYPES:
-			return True
-
 		if self.array:
 			return False
+
+		if self.type in BUILTIN_TYPES:
+			return True
 
 		return self.type.isPOD()
 
