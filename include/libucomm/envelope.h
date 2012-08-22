@@ -145,7 +145,7 @@ public:
 		CHECKSUM_ERROR
 	};
 
-	bool take(uint8_t c)
+	TakeResult take(uint8_t c)
 	{
 		switch(m_state)
 		{
