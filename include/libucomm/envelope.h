@@ -117,6 +117,8 @@ public:
 
 			memcpy(data, m_envReader->m_buffer + m_idx, size);
 			m_idx += size;
+
+			return true;
 		}
 
 		bool skip(size_t size)
@@ -125,6 +127,8 @@ public:
 				return false;
 
 			m_idx += size;
+
+			return true;
 		}
 	private:
 		EnvelopeReader* m_envReader;
