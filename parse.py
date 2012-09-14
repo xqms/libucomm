@@ -26,17 +26,18 @@ class Member:
 	grammar = (
 		  Identifier.grammar("type")
 		+ Identifier.grammar("name")
-		+ Optional(Literal('[]'))("array")
+		+ Optional(Literal('[') + Optional(CharsNotIn(']'))("size") + Literal(']'))("array")
 		+ Suppress(';')
 	)
 
-	def __init__(self, type, name, array=False):
+	def __init__(self, type, name, array=False, array_size=None):
 		self.name = name
 		self.type = type
 		self.array = array
+		self.array_size = array_size
 
 	def isPOD(self):
-		if self.array:
+		if self.array and not self.array_size:
 			return False
 
 		if self.type in BUILTIN_TYPES:
@@ -45,10 +46,14 @@ class Member:
 		return self.type.isPOD()
 
 	def size(self):
+		c = ""
+		if self.array and self.array_size:
+			c = "(" + self.array_size + ") * "
+		
 		if self.type in BUILTIN_TYPES:
-			return BUILTIN_TYPES[self.type]
+			return c + str(BUILTIN_TYPES[self.type])
 
-		return self.type.podSize()
+		return c + self.type.podSize()
 
 	def __str__(self):
 		s = self.type + " " + self.name
@@ -58,10 +63,15 @@ class Member:
 
 	def definition(self, last=False):
 		if self.array:
-			last = str(last).lower()
-			return "uc::List< uc::IOInstance<IO, %s>, %s > %s;" % (
-				last, self.type, self.name
-			)
+			if self.array_size:
+				# Known array size
+				return str(self.type) + " " + self.name + "[" + self.array_size + "];"
+			else:
+				# Dynamic array
+				last = str(last).lower()
+				return "uc::List< uc::IOInstance<IO, %s>, %s > %s;" % (
+					last, self.type, self.name
+				)
 		else:
 			return str(self.type) + " " + self.name + ";"
 
@@ -77,11 +87,13 @@ class Member:
 	@classmethod
 	def parse(cls, parse_result):
 		array = False
+		array_size = None
 
 		if parse_result.array:
 			array = True
+			array_size = parse_result.array.size
 
-		return cls(parse_result.type, parse_result.name, array)
+		return cls(parse_result.type, parse_result.name, array, array_size)
 registerParseAction(Member)
 
 class Custom:
@@ -137,7 +149,7 @@ class Struct:
 			'\tenum',
 			'\t{',
 			'\t\tIS_POD = %d,' % self.isPOD(),
-			'\t\tPOD_SIZE = %d,' % self.podSize(),
+			'\t\tPOD_SIZE = %s,' % self.podSize(),
 			'\t};',
 			'',
 		]
@@ -169,13 +181,21 @@ class Struct:
 			'',
 			self.def_serialize(),
 			self.def_deserialize(),
-			'};',
 		]
+
+		if self.isPOD():
+			code.append('} __attribute__((packed));')
+		else:
+			code.append('};')
 
 		return '\n'.join(code)
 
 	def podSize(self):
-		return sum([ m.size() for m in self.members if m.isPOD()])
+		podMembers = [ m for m in self.members if m.isPOD() ]
+		if len(self.podMembers) == 0:
+			return "0"
+		else:
+			return ' + '.join([ "(" + m.size() + ")" for m in podMembers ])
 
 	def isPOD(self):
 		for m in self.members:
@@ -191,7 +211,7 @@ class Struct:
 
 		if self.podSize() > 0:
 			code += [
-				'\tRETURN_IF_ERROR(output->write(this, %d));' % self.podSize(),
+				'\tRETURN_IF_ERROR(output->write(this, %s));' % self.podSize(),
 			]
 
 		code += ['\tRETURN_IF_ERROR(%s.serialize(output));' % m.name for m in self.nonPODMembers]
@@ -211,7 +231,7 @@ class Struct:
 
 		if self.podSize() > 0:
 			code += [
-				'\tRETURN_IF_ERROR(input->read(this, %d));' % self.podSize(),
+				'\tRETURN_IF_ERROR(input->read(this, %s));' % self.podSize(),
 			]
 
 		for i, m in enumerate(self.nonPODMembers):
