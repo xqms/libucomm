@@ -1,0 +1,13 @@
+# - Config file for the libucomm package
+
+# Compute paths
+get_filename_component(LIBUCOMM_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+if(EXISTS "${LIBUCOMM_CMAKE_DIR}/CMakeCache.txt")
+   # In build tree
+   include("${LIBUCOMM_CMAKE_DIR}/libucommBuildTreeSettings.cmake")
+else()
+   set(LIBUCOMM_INCLUDE_DIRS "${LIBUCOMM_CMAKE_DIR}/@CONF_REL_INCLUDE_DIR@")
+   set(LIBUCOMM_PARSE_PY "${LIBUCOMM_CMAKE_DIR}/@CONF_REL_PARSE_PY@")
+   include(${LIBUCOMM_CMAKE_DIR}/libucomm.cmake)
+endif()
+

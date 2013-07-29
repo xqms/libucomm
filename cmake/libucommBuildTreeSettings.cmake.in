@@ -1,0 +1,3 @@
+set(LIBUCOMM_INCLUDE_DIRS "@PROJECT_SOURCE_DIR@/include")
+set(LIBUCOMM_PARSE_PY "@PROJECT_SOURCE_DIR@/libucomm_parse.py")
+include("@PROJECT_SOURCE_DIR@/cmake/libucomm.cmake")
