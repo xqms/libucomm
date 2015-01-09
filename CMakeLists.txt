@@ -16,6 +16,8 @@ set(LIBUCOMM_PARSE_PY ${CMAKE_HOME_DIRECTORY}/libucomm_parse.py)
 set(LIBUCOMM_INCLUDE_DIR ${CMAKE_HOME_DIRECTORY}/include)
 include(cmake/libucomm.cmake)
 
+include_directories(include)
+
 add_subdirectory(examples)
 
 set(ENABLE_TESTS ON CACHE BOOL "Enable tests")
