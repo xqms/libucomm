@@ -5,10 +5,11 @@
 #include <libucomm/checksum.h>
 #include <libucomm/io.h>
 
+#include "catch.hpp"
+
 #include "simple.h"
 
 #include "bufferio.h"
-#include "asserts.h"
 
 #include <stdio.h>
 
@@ -30,7 +31,7 @@ bool fillStruct(WProto::Struct* data, SizeType idx)
 	return true;
 }
 
-int main()
+TEST_CASE("simple", "[simple]")
 {
 	WProto::Message pkt;
 	pkt.flags = 0;
@@ -47,28 +48,27 @@ int main()
 	{
 		if(input.take(dbg.getChar()) == EnvelopeReader::NEW_MESSAGE)
 		{
-			ASSERT_EQUAL(input.msgCode(), RProto::Message::MSG_CODE);
+			REQUIRE(input.msgCode() == RProto::Message::MSG_CODE);
 
 			RProto::Message pkt2;
 			input >> pkt2;
 
-			ASSERT_EQUAL(pkt2.flags, pkt.flags);
+			REQUIRE(pkt2.flags == pkt.flags);
 
 			RProto::Struct data;
 			int i = 0;
 			while(pkt2.list.next(&data))
 			{
-				ASSERT_EQUAL(data.index, i);
-				ASSERT_EQUAL(data.some_value, 5*i);
+				REQUIRE(data.index == i);
+				REQUIRE(data.some_value == 5*i);
 				++i;
 			}
 
-			ASSERT_EQUAL(i, 4);
+			REQUIRE(i == 4);
 
 			packetCount++;
 		}
 	}
 
-	ASSERT_EQUAL(packetCount, 2);
-	return 0;
+	REQUIRE(packetCount == 2);
 }
