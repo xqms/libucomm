@@ -242,6 +242,13 @@ public:
 
 		return *this;
 	}
+
+	template<class MSG>
+	bool read(MSG* msg)
+	{
+		Reader reader = makeReader();
+		return msg->deserialize(&reader);
+	}
 private:
 	enum State
 	{
