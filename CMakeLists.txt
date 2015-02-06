@@ -5,8 +5,21 @@ project(libucomm)
 
 set(LIBUCOMM_VERSION 0.1)
 
-set(CONF_REL_INCLUDE_DIR "../../../include")
-set(CONF_REL_PARSE_PY "../../../bin/libucomm_parse.py")
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+	"${CMAKE_CURRENT_BINARY_DIR}/cmake/libucommConfigVersion.cmake"
+	VERSION ${LIBUCOMM_VERSION}
+	COMPATIBILITY AnyNewerVersion
+)
+
+configure_file(
+	cmake/libucommConfig.cmake.in
+	"${CMAKE_CURRENT_BINARY_DIR}/cmake/libucommConfig.cmake"
+	COPYONLY
+)
+
+set(CONF_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
+set(CONF_PARSE_PY "${CMAKE_INSTALL_PREFIX}/bin/libucomm_parse.py")
 
 configure_file(cmake/libucommConfig.cmake.in "${PROJECT_BINARY_DIR}/cmake/libucommConfig.cmake" @ONLY)
 configure_file(cmake/libucommConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/cmake/libucommConfigVersion.cmake" @ONLY)
@@ -18,7 +31,10 @@ include(cmake/libucomm.cmake)
 
 include_directories(include)
 
-add_subdirectory(examples)
+set(BUILD_EXAMPLES ON CACHE BOOL "Enable examples")
+if(BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif()
 
 set(ENABLE_TESTS ON CACHE BOOL "Enable tests")
 if(ENABLE_TESTS)
