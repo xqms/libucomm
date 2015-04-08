@@ -158,7 +158,7 @@ public:
 					m_state = STATE_START2;
 				break;
 			case STATE_START2:
-				if(c != 0xFE && c != 0xFD)
+				if(c != 0xFF && c != 0xFE && c != 0xFD)
 				{
 					m_msgCode = c;
 					m_idx = 0;
