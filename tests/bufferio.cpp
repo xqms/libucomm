@@ -4,6 +4,7 @@
 #include "bufferio.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 inline size_t nextPos(size_t pos, size_t size)
 {
@@ -32,6 +33,33 @@ bool BufferIO::writeChar(uint8_t c)
 
 	m_buffer[m_writePos] = c;
 	m_writePos = next;
+
+	return true;
+}
+
+uint8_t* BufferIO::dataPointer()
+{
+	return m_buffer + m_writePos;
+}
+
+size_t BufferIO::dataSize() const
+{
+	if(m_readPos <= m_writePos)
+		return m_size - m_writePos;
+	else
+		return m_readPos - m_writePos - 1;
+}
+
+void BufferIO::packetComplete(size_t n)
+{
+	printf("packet:");
+	for(size_t i = 0; i < n; ++i)
+	{
+		printf(" 0x%02X", m_buffer[m_writePos + i]);
+	}
+	printf("\n");
+
+	m_writePos += n;
 }
 
 bool BufferIO::isCharAvailable()

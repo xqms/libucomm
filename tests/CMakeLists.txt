@@ -5,6 +5,7 @@ libucomm_wrap_msg(SIMPLE_MSG simple.msg)
 add_executable(libucomm_tests
 	main.cpp
 	simple.cpp
+	simple_cobs.cpp
 	bufferio.cpp
 	${SIMPLE_MSG}
 )

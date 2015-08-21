@@ -10,6 +10,8 @@ namespace uc
 class ModSumGenerator
 {
 public:
+	typedef uint8_t SumType;
+
 	void add(uint8_t c)
 	{
 		m_value += c;
@@ -31,6 +33,8 @@ private:
 class InvertedModSumGenerator
 {
 public:
+	typedef uint8_t SumType;
+
 	void add(uint8_t c)
 	{
 		m_value += c;

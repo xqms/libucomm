@@ -16,6 +16,11 @@ public:
 	// Implement interface
 	bool writeChar(uint8_t c);
 
+	// Implement BufferedWriter interface
+	uint8_t* dataPointer();
+	size_t dataSize() const;
+	void packetComplete(size_t n);
+
 	// Read methods
 	uint8_t getChar();
 	bool isCharAvailable();
