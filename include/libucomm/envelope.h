@@ -1,11 +1,13 @@
 // Envelope wrapping/unwrapping
-// Author: Max Schwarz <max@x-quadraht.de>
+// Author: Max Schwarz <max.schwarz@online.de>
 
 #ifndef LIBUCOMM_ENEVELOPE_H
 #define LIBUCOMM_ENEVELOPE_H
 
 #include <stdint.h>
 #include <string.h>
+
+#include "writer.h"
 #include "util/error.h"
 #include "util/integers.h"
 
@@ -22,12 +24,6 @@
 
 namespace uc
 {
-
-class CharWriter
-{
-public:
-	virtual bool writeChar(uint8_t c) = 0;
-};
 
 template<class ChecksumGenerator, class CharWriterType = CharWriter>
 class EnvelopeWriter
