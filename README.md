@@ -13,6 +13,8 @@ Features
  - Very little assumptions about communication architecture
  - Flexible checksum system (add your own checksum method)
  - Default envelope system guarantees synchronization
+ - Slightly more advanced COBS (consistent overhead byte stuffing) envelope
+   format available
 
 Caveats
 =======
