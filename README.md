@@ -5,6 +5,9 @@ Introduction
 libucomm aims to be a generic C++ library for serial communication
 between space-constrained low-power devices such as microcontrollers.
 
+The library is heavily templated to adapt to any usage pattern with minimal
+overhead.
+
 Features
 ========
 
@@ -12,15 +15,41 @@ Features
  - Optimizes away to no overhead in most cases
  - Very little assumptions about communication architecture
  - Flexible checksum system (add your own checksum method)
- - Default envelope system guarantees synchronization
- - Slightly more advanced COBS (consistent overhead byte stuffing) envelope
-   format available
+
+Envelope formats
+================
+
+The "envelope" protects your data on the wire. This could be a serial
+connection, for example.
+
+libucomm supports two envelope formats:
+
+ - default (`EnvelopeWriter`/`EnvelopeReader`): Very basic format providing
+   hard synchronization (magic start sequence) with simple escaping of the
+   payload. Is able to operate without a buffer.
+ - COBS (`COBSWriter` / `COBSReader`): Also provides hard synchronization
+   using a magic byte value. Stuffs the payload with minimal overhead using
+   the COBS algorithm. Needs a random-access buffer during packet sending,
+   though.
+
+The COBS envelope format is recommended for new protocol designs.
+
+Checksums
+=========
+
+libucomm comes with the following checksum implementations:
+
+ - simple 8-bit modular sum
+ - inverted 8-bit modular sum
+ - Fletcher-16
+
+It's very easy to implement your own checksumming function (see checksum.h).
 
 Caveats
 =======
 
- - Assumes endianness is the same. If you want to improve on this, it should
-   be fairly easy to fix in parse.py.
+ - Assumes endianness is the same on both endpoints. If you want to improve on
+   this, it should be fairly easy to fix in parse.py.
 
 Usage
 =====
