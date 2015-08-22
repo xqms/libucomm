@@ -53,16 +53,32 @@ public:
 	//! Implement the IO writer interface
 	bool write(const void* data, size_t size);
 
-	bool endEnvelope();
+	bool endEnvelope(bool terminate = true);
 
 	/**
 	 * @brief Write message
 	 *
 	 * Processes & outputs the message @a msg. This should be your main
 	 * interaction point with this class.
+	 *
+	 * @note For more options & error checking, use send().
 	 **/
 	template<class MSG>
 	COBSWriter<ChecksumGenerator, WriterType>& operator<< (const MSG& msg);
+
+	/**
+	 * @brief Write message
+	 *
+	 * Processes & outputs the message @a msg. This should be your main
+	 * interaction point with this class.
+	 *
+	 * @param terminate If this is false, the system will not send the final
+	 *   zero byte. You can do this if you immediately follow up with the
+	 *   next packet.
+	 * @return true on success
+	 **/
+	template<class MSG>
+	bool send(const MSG& msg, bool terminate = true);
 private:
 	//! Write byte and add it to the checksum
 	bool writeAndChecksum(uint8_t c);
@@ -238,7 +254,7 @@ bool COBSWriter<ChecksumGenerator, WriterType>::write(const void* data, size_t s
 }
 
 template<class ChecksumGenerator, class WriterType>
-bool COBSWriter<ChecksumGenerator, WriterType>::endEnvelope()
+bool COBSWriter<ChecksumGenerator, WriterType>::endEnvelope(bool terminate)
 {
 	typename ChecksumGenerator::SumType sum = m_checksum.value();
 
@@ -253,9 +269,12 @@ bool COBSWriter<ChecksumGenerator, WriterType>::endEnvelope()
 	m_dstPtr--;
 
 	// Append a zero (this starts the receive handler immediately)
-	if(m_dstPtr == m_dstEnd)
-		return false;
-	*m_dstPtr++ = 0x00;
+	if(terminate)
+	{
+		if(m_dstPtr == m_dstEnd)
+			return false;
+		*m_dstPtr++ = 0x00;
+	}
 
 	m_writer->packetComplete(m_dstPtr - m_writer->dataPointer());
 
@@ -267,16 +286,17 @@ template<class MSG>
 COBSWriter<ChecksumGenerator, WriterType>&
 COBSWriter<ChecksumGenerator, WriterType>::operator<<(const MSG& msg)
 {
-	if(!startEnvelope(MSG::MSG_CODE))
-		return *this;
-
-	if(!msg.serialize(this))
-		return *this;
-
-	if(!endEnvelope())
-		return *this;
-
+	send(msg);
 	return *this;
+}
+
+template<class ChecksumGenerator, class WriterType>
+template<class MSG>
+bool COBSWriter<ChecksumGenerator, WriterType>::send(const MSG& msg, bool terminate)
+{
+	RETURN_IF_ERROR(startEnvelope(MSG::MSG_CODE));
+	RETURN_IF_ERROR(msg.serialize(this));
+	RETURN_IF_ERROR(endEnvelope(terminate));
 }
 
 template<class ChecksumGenerator, class WriterType>
