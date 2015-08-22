@@ -444,9 +444,12 @@ template<class ChecksumGenerator, int MaxPacketSize>
 typename COBSReader<ChecksumGenerator, MaxPacketSize>::TakeResult
 COBSReader<ChecksumGenerator, MaxPacketSize>::finish()
 {
+	// Precondition: we just received a 0x00 byte. So the next state
+	// *must* be STATE_MSG_CODE.
+
 	if(m_idx < sizeof(typename ChecksumGenerator::SumType) + 1)
 	{
-		m_state = STATE_START;
+		m_state = STATE_MSG_CODE;
 		return FRAME_ERROR; // Short packet
 	}
 
@@ -467,14 +470,14 @@ COBSReader<ChecksumGenerator, MaxPacketSize>::finish()
 
 	if(m_generator.value() != *sum)
 	{
-		m_state = STATE_START;
+		m_state = STATE_MSG_CODE;
 		return CHECKSUM_ERROR;
 	}
 
 	// Remove checksum
 	m_idx -= sizeof(typename ChecksumGenerator::SumType);
 
-	m_state = STATE_START;
+	m_state = STATE_MSG_CODE;
 	return NEW_MESSAGE;
 }
 
