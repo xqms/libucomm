@@ -92,6 +92,66 @@ TEST_CASE("simple_cobs", "[cobs]")
 	REQUIRE(packetCount == 2);
 }
 
+TEST_CASE("chained_cobs", "[cobs]")
+{
+	WProto::Message pkt;
+	pkt.flags = 0;
+	pkt.list.setCallback(fillStruct, 4);
+
+	BufferIO dbg;
+	EnvelopeWriter output(&dbg);
+	output.send(pkt, false);
+	output.send(pkt);
+
+	int packetCount = 0;
+
+	EnvelopeReader input;
+	while(dbg.isCharAvailable())
+	{
+		EnvelopeReader::TakeResult ret = input.take(dbg.getChar());
+
+		switch(ret)
+		{
+			case EnvelopeReader::NEW_MESSAGE:
+			{
+				REQUIRE(input.msgCode() == RProto::Message::MSG_CODE);
+
+				RProto::Message pkt2;
+				input >> pkt2;
+
+				REQUIRE(pkt2.flags == pkt.flags);
+
+				RProto::Struct data;
+				int i = 0;
+				while(pkt2.list.next(&data))
+				{
+					REQUIRE(data.index == i);
+					REQUIRE(data.some_value == 5*i);
+					++i;
+				}
+
+				REQUIRE(i == 4);
+
+				packetCount++;
+				break;
+			}
+			case EnvelopeReader::NEED_MORE_DATA:
+				break;
+			case EnvelopeReader::CHECKSUM_ERROR:
+				FAIL("Checksum error");
+				break;
+			case EnvelopeReader::FRAME_ERROR:
+				FAIL("Frame error");
+				break;
+			default:
+				FAIL("Unknown error");
+				break;
+		}
+	}
+
+	REQUIRE(packetCount == 2);
+}
+
 TEST_CASE("corrupt_cobs", "[cobs]")
 {
 	WProto::Message pkt;
