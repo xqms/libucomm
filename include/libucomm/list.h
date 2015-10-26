@@ -71,6 +71,10 @@ public:
 	typedef typename IntForSize<Size>::Type SizeType;
 	typedef bool (*Callback)(T* dest, SizeType idx);
 
+	List()
+	 : m_mode(MODE_EMPTY)
+	{}
+
 	inline void setData(T* data, SizeType count)
 	{
 		m_mode = MODE_DIRECT_DATA;
@@ -96,7 +100,7 @@ public:
 			for(SizeType i = 0; i != m_count; ++i)
 				RETURN_IF_ERROR(m_data[i].serialize(writer));
 		}
-		else
+		else if(m_mode == MODE_CALLBACK)
 		{
 			T buf;
 			for(SizeType i = 0; i != m_count; ++i)
@@ -111,6 +115,7 @@ public:
 
 private:
 	enum Mode {
+		MODE_EMPTY,
 		MODE_DIRECT_DATA,
 		MODE_CALLBACK
 	};
