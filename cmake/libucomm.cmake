@@ -5,7 +5,7 @@ macro(libucomm_wrap_msg outfile msg)
 	add_custom_command(
 		OUTPUT ${${outfile}}
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${msg}
-		COMMAND python ${LIBUCOMM_PARSE_PY}
+		COMMAND python2 ${LIBUCOMM_PARSE_PY}
 			${CMAKE_CURRENT_SOURCE_DIR}/${msg}
 			> ${${outfile}}
 	)
