@@ -53,7 +53,7 @@ class Member:
 		if self.type in BUILTIN_TYPES:
 			return c + str(BUILTIN_TYPES[self.type])
 
-		return c + self.type.podSize()
+		return c + "(" + self.type.podSize() + ")"
 
 	def __str__(self):
 		s = self.type + " " + self.name
