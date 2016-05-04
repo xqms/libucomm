@@ -22,6 +22,70 @@ class UnknownTypeError(Exception):
 class Identifier:
 	grammar = Word(alphas, alphanums + '_')
 
+class EnumEntry:
+	grammar = (
+		  Identifier.grammar("name")
+		+ Optional(Suppress("=") + SkipTo(Literal("}") | Literal(","), include=False)("assignement"))
+	)
+
+	def __init__(self, name, assignement=None):
+		self.name = name
+		self.assignement = assignement
+
+	def definition(self):
+		if self.assignement:
+			return str(self.name) + " = " + str(self.assignement) + ","
+		else:
+			return str(self.name) + ","
+
+	@classmethod
+	def parse(cls, parse_result):
+		assignement = None
+
+		if parse_result.assignement:
+			assignement = parse_result.assignement
+
+		return cls(parse_result.name, assignement)
+registerParseAction(EnumEntry)
+
+
+class Enum:
+	grammar = (
+		  Suppress("enum")
+		+ Optional(Identifier.grammar)("name")
+		+ Suppress("{")
+		+ (
+			  ZeroOrMore( EnumEntry.grammar + Suppress(Literal(",")))
+			+ Optional(EnumEntry.grammar)
+		  )("entries")
+		+ Suppress("}")
+		+ Suppress(";")
+	)
+
+	def __init__(self, name, entries):
+		self.name = name
+		self.entries = list(entries)
+
+	def __str__(self):
+		return self.name
+
+	def definition(self, indent_level = 0):
+		base_indent = '\t' * indent_level
+		code = [
+			base_indent + 'enum %s' % self.name,
+			base_indent + '{',
+			'\n'.join([base_indent + '\t' + e.definition() for e in self.entries]),
+			base_indent + '};'
+		]
+
+		return '\n'.join(code)
+
+	@classmethod
+	def parse(cls, parse_result):
+		return cls(parse_result.name, parse_result.entries)
+registerParseAction(Enum)
+
+
 class Member:
 	grammar = (
 		  Identifier.grammar("type")
@@ -126,15 +190,17 @@ class Struct:
 		  (Literal('struct') | Literal('msg'))('type')
 		+ Identifier.grammar("name")
 		+ Suppress('{')
+		+ ZeroOrMore(Enum.grammar)("enums")
 		+ ZeroOrMore(Member.grammar)("members")
 		+ Suppress('}')
 		+ Suppress(';')
 	)
 
-	def __init__(self, type, name, members):
+	def __init__(self, type, name, members, enums):
 		self.type = type
 		self.name = name
 		self.members = list(members)
+		self.enums = list(enums)
 
 	def __str__(self):
 		return self.name
@@ -162,6 +228,9 @@ class Struct:
 				'\t};',
 				'',
 			]
+
+		if self.enums :
+			code += [ m.definition(1) for m in self.enums ]
 
 		if self.podMembers:
 			code += [
@@ -262,13 +331,13 @@ class Struct:
 
 	@classmethod
 	def parse(cls, parse_result):
-		return cls(parse_result.type, parse_result.name, parse_result.members)
+		return cls(parse_result.type, parse_result.name, parse_result.members, parse_result.enums)
 registerParseAction(Struct)
 
 
 class Grammar:
 	def __init__(self):
-		self.document = ZeroOrMore(Struct.grammar | Custom.grammar)
+		self.document = ZeroOrMore(Struct.grammar | Custom.grammar | Enum.grammar)
 
 class Parser:
 	def __init__(self, grammar):
@@ -288,6 +357,7 @@ class Parser:
 
 		types = {}
 
+		enums = [ s for s in ret if isinstance(s, Enum) ]
 		structs = [ s for s in ret if isinstance(s, Struct) ]
 		custom_areas = [ s for s in ret if isinstance(s, Custom) ]
 
@@ -314,6 +384,10 @@ class Parser:
 		print 'public:'
 
 		msg_counter = 0
+
+		print
+		for enum in enums:
+			print enum.definition() + "\n"
 
 		for struct in structs:
 			struct.resolveTypes(types)
