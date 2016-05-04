@@ -71,8 +71,12 @@ class Enum:
 
 	def definition(self, indent_level = 0):
 		base_indent = '\t' * indent_level
-		code = [
-			base_indent + 'enum %s' % self.name,
+		code = []
+		if self.name:
+			code.append(base_indent + 'enum %s' % self.name)
+		else:
+			code.append(base_indent + 'enum')
+		code += [
 			base_indent + '{',
 			'\n'.join([base_indent + '\t' + e.definition() for e in self.entries]),
 			base_indent + '};'
