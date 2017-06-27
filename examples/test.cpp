@@ -16,7 +16,7 @@ public:
 	{
 	}
 
-	bool writeChar(uint8_t c)
+	bool writeChar(uint8_t c) override
 	{
 		m_buffer[m_writeIdx++] = c;
 		// FIXME: Range check
@@ -28,10 +28,14 @@ public:
 		return m_writeIdx != m_readIdx;
 	}
 
-	uint8_t getc()
+	uint8_t get()
 	{
 		// FIXME: Range check
 		return m_buffer[m_readIdx++];
+	}
+
+	void flush() override
+	{
 	}
 private:
 	uint8_t m_buffer[BUFSIZE];
@@ -70,7 +74,7 @@ int main()
 	EnvelopeReader input;
 	while(dbg.isDataAvailable())
 	{
-		if(input.take(dbg.getc()) == EnvelopeReader::NEW_MESSAGE)
+		if(input.take(dbg.get()) == EnvelopeReader::NEW_MESSAGE)
 		{
 			if(input.msgCode() == RProto::ServoPacket::MSG_CODE)
 			{
