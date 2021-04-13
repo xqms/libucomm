@@ -10,37 +10,37 @@ const int BUFSIZE = 1024;
 class DebugCharIO : public uc::CharWriter
 {
 public:
-	DebugCharIO()
-	 : m_readIdx(0)
-	 , m_writeIdx(0)
-	{
-	}
+    DebugCharIO()
+     : m_readIdx(0)
+     , m_writeIdx(0)
+    {
+    }
 
-	bool writeChar(uint8_t c) override
-	{
-		m_buffer[m_writeIdx++] = c;
-		// FIXME: Range check
-		return true;
-	}
+    bool writeChar(uint8_t c) override
+    {
+        m_buffer[m_writeIdx++] = c;
+        // FIXME: Range check
+        return true;
+    }
 
-	bool isDataAvailable() const
-	{
-		return m_writeIdx != m_readIdx;
-	}
+    bool isDataAvailable() const
+    {
+        return m_writeIdx != m_readIdx;
+    }
 
-	uint8_t get()
-	{
-		// FIXME: Range check
-		return m_buffer[m_readIdx++];
-	}
+    uint8_t get()
+    {
+        // FIXME: Range check
+        return m_buffer[m_readIdx++];
+    }
 
-	void flush() override
-	{
-	}
+    void flush() override
+    {
+    }
 private:
-	uint8_t m_buffer[BUFSIZE];
-	uint8_t m_readIdx;
-	uint8_t m_writeIdx;
+    uint8_t m_buffer[BUFSIZE];
+    uint8_t m_readIdx;
+    uint8_t m_writeIdx;
 };
 
 typedef uc::EnvelopeWriter<uc::InvertedModSumGenerator> EnvelopeWriter;
@@ -55,39 +55,39 @@ typedef Proto<SimpleReader> RProto;
 template<class SizeType>
 bool fillServoCommands(WProto::ServoCommand* cmd, SizeType idx)
 {
-	cmd->id = idx;
-	cmd->command = 2 * idx;
+    cmd->id = idx;
+    cmd->command = 2 * idx;
 
-	return true;
+    return true;
 }
 
 int main()
 {
-	WProto::ServoPacket pkt;
-	pkt.flags = 0;
-	pkt.cmds.setCallback(fillServoCommands, 4);
+    WProto::ServoPacket pkt;
+    pkt.flags = 0;
+    pkt.cmds.setCallback(fillServoCommands, 4);
 
-	DebugCharIO dbg;
-	EnvelopeWriter output(&dbg);
-	output << pkt << pkt;
+    DebugCharIO dbg;
+    EnvelopeWriter output(&dbg);
+    output << pkt << pkt;
 
-	EnvelopeReader input;
-	while(dbg.isDataAvailable())
-	{
-		if(input.take(dbg.get()) == EnvelopeReader::NEW_MESSAGE)
-		{
-			if(input.msgCode() == RProto::ServoPacket::MSG_CODE)
-			{
-				RProto::ServoPacket pkt2;
-				input >> pkt2;
+    EnvelopeReader input;
+    while(dbg.isDataAvailable())
+    {
+        if(input.take(dbg.get()) == EnvelopeReader::NEW_MESSAGE)
+        {
+            if(input.msgCode() == RProto::ServoPacket::MSG_CODE)
+            {
+                RProto::ServoPacket pkt2;
+                input >> pkt2;
 
-				printf("Flags: %d\n", pkt2.flags);
-				RProto::ServoCommand cmd;
-				while(pkt2.cmds.next(&cmd))
-				{
-					printf("cmd: %d -> %d\n", cmd.id, cmd.command);
-				}
-			}
-		}
-	}
+                printf("Flags: %d\n", pkt2.flags);
+                RProto::ServoCommand cmd;
+                while(pkt2.cmds.next(&cmd))
+                {
+                    printf("cmd: %d -> %d\n", cmd.id, cmd.command);
+                }
+            }
+        }
+    }
 }

@@ -14,18 +14,18 @@ template<class _Handler, class _Mode>
 class IO
 {
 public:
-	typedef _Mode Mode;
-	typedef _Handler Handler;
-	typedef typename Handler::Reader Reader;
+    typedef _Mode Mode;
+    typedef _Handler Handler;
+    typedef typename Handler::Reader Reader;
 };
 
 template<class _IO, bool _IsLast>
 class IOInstance
 {
 public:
-	typedef _IO IO;
-	typedef typename IO::Reader Reader;
-	enum { IsLast = _IsLast };
+    typedef _IO IO;
+    typedef typename IO::Reader Reader;
+    enum { IsLast = _IsLast };
 };
 
 }

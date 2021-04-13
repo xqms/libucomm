@@ -27,173 +27,173 @@ typedef Proto<SimpleReader> RProto;
 template<class SizeType>
 bool fillStruct(WProto::Struct* data, SizeType idx)
 {
-	data->index = idx;
-	data->some_value = 5*idx;
+    data->index = idx;
+    data->some_value = 5*idx;
 
-	return true;
+    return true;
 }
 
 TEST_CASE("simple_cobs", "[cobs]")
 {
-	WProto::Message pkt;
-	pkt.flags = 0;
-	pkt.list.setCallback(fillStruct, 4);
+    WProto::Message pkt;
+    pkt.flags = 0;
+    pkt.list.setCallback(fillStruct, 4);
 
-	BufferIO dbg;
-	EnvelopeWriter output(&dbg);
-	output << pkt << pkt;
+    BufferIO dbg;
+    EnvelopeWriter output(&dbg);
+    output << pkt << pkt;
 
-	int packetCount = 0;
+    int packetCount = 0;
 
-	EnvelopeReader input;
-	while(dbg.isCharAvailable())
-	{
-		EnvelopeReader::TakeResult ret = input.take(dbg.getChar());
+    EnvelopeReader input;
+    while(dbg.isCharAvailable())
+    {
+        EnvelopeReader::TakeResult ret = input.take(dbg.getChar());
 
-		switch(ret)
-		{
-			case EnvelopeReader::NEW_MESSAGE:
-			{
-				REQUIRE(input.msgCode() == RProto::Message::MSG_CODE);
+        switch(ret)
+        {
+            case EnvelopeReader::NEW_MESSAGE:
+            {
+                REQUIRE(input.msgCode() == RProto::Message::MSG_CODE);
 
-				RProto::Message pkt2;
-				input >> pkt2;
+                RProto::Message pkt2;
+                input >> pkt2;
 
-				REQUIRE(pkt2.flags == pkt.flags);
+                REQUIRE(pkt2.flags == pkt.flags);
 
-				RProto::Struct data;
-				int i = 0;
-				while(pkt2.list.next(&data))
-				{
-					REQUIRE(data.index == i);
-					REQUIRE(data.some_value == 5*i);
-					++i;
-				}
+                RProto::Struct data;
+                int i = 0;
+                while(pkt2.list.next(&data))
+                {
+                    REQUIRE(data.index == i);
+                    REQUIRE(data.some_value == 5*i);
+                    ++i;
+                }
 
-				REQUIRE(i == 4);
+                REQUIRE(i == 4);
 
-				packetCount++;
-				break;
-			}
-			case EnvelopeReader::NEED_MORE_DATA:
-				break;
-			case EnvelopeReader::CHECKSUM_ERROR:
-				FAIL("Checksum error");
-				break;
-			case EnvelopeReader::FRAME_ERROR:
-				FAIL("Frame error");
-				break;
-			default:
-				FAIL("Unknown error");
-				break;
-		}
-	}
+                packetCount++;
+                break;
+            }
+            case EnvelopeReader::NEED_MORE_DATA:
+                break;
+            case EnvelopeReader::CHECKSUM_ERROR:
+                FAIL("Checksum error");
+                break;
+            case EnvelopeReader::FRAME_ERROR:
+                FAIL("Frame error");
+                break;
+            default:
+                FAIL("Unknown error");
+                break;
+        }
+    }
 
-	REQUIRE(packetCount == 2);
+    REQUIRE(packetCount == 2);
 }
 
 TEST_CASE("chained_cobs", "[cobs]")
 {
-	WProto::Message pkt;
-	pkt.flags = 0;
-	pkt.list.setCallback(fillStruct, 4);
+    WProto::Message pkt;
+    pkt.flags = 0;
+    pkt.list.setCallback(fillStruct, 4);
 
-	BufferIO dbg;
-	EnvelopeWriter output(&dbg);
-	output.send(pkt, false);
-	output.send(pkt);
+    BufferIO dbg;
+    EnvelopeWriter output(&dbg);
+    output.send(pkt, false);
+    output.send(pkt);
 
-	int packetCount = 0;
+    int packetCount = 0;
 
-	EnvelopeReader input;
-	while(dbg.isCharAvailable())
-	{
-		EnvelopeReader::TakeResult ret = input.take(dbg.getChar());
+    EnvelopeReader input;
+    while(dbg.isCharAvailable())
+    {
+        EnvelopeReader::TakeResult ret = input.take(dbg.getChar());
 
-		switch(ret)
-		{
-			case EnvelopeReader::NEW_MESSAGE:
-			{
-				REQUIRE(input.msgCode() == RProto::Message::MSG_CODE);
+        switch(ret)
+        {
+            case EnvelopeReader::NEW_MESSAGE:
+            {
+                REQUIRE(input.msgCode() == RProto::Message::MSG_CODE);
 
-				RProto::Message pkt2;
-				input >> pkt2;
+                RProto::Message pkt2;
+                input >> pkt2;
 
-				REQUIRE(pkt2.flags == pkt.flags);
+                REQUIRE(pkt2.flags == pkt.flags);
 
-				RProto::Struct data;
-				int i = 0;
-				while(pkt2.list.next(&data))
-				{
-					REQUIRE(data.index == i);
-					REQUIRE(data.some_value == 5*i);
-					++i;
-				}
+                RProto::Struct data;
+                int i = 0;
+                while(pkt2.list.next(&data))
+                {
+                    REQUIRE(data.index == i);
+                    REQUIRE(data.some_value == 5*i);
+                    ++i;
+                }
 
-				REQUIRE(i == 4);
+                REQUIRE(i == 4);
 
-				packetCount++;
-				break;
-			}
-			case EnvelopeReader::NEED_MORE_DATA:
-				break;
-			case EnvelopeReader::CHECKSUM_ERROR:
-				FAIL("Checksum error");
-				break;
-			case EnvelopeReader::FRAME_ERROR:
-				FAIL("Frame error");
-				break;
-			default:
-				FAIL("Unknown error");
-				break;
-		}
-	}
+                packetCount++;
+                break;
+            }
+            case EnvelopeReader::NEED_MORE_DATA:
+                break;
+            case EnvelopeReader::CHECKSUM_ERROR:
+                FAIL("Checksum error");
+                break;
+            case EnvelopeReader::FRAME_ERROR:
+                FAIL("Frame error");
+                break;
+            default:
+                FAIL("Unknown error");
+                break;
+        }
+    }
 
-	REQUIRE(packetCount == 2);
+    REQUIRE(packetCount == 2);
 }
 
 TEST_CASE("corrupt_cobs", "[cobs]")
 {
-	WProto::Message pkt;
-	pkt.flags = 0;
-	pkt.list.setCallback(fillStruct, 4);
+    WProto::Message pkt;
+    pkt.flags = 0;
+    pkt.list.setCallback(fillStruct, 4);
 
-	BufferIO dbg;
-	EnvelopeWriter output(&dbg);
-	output << pkt;
+    BufferIO dbg;
+    EnvelopeWriter output(&dbg);
+    output << pkt;
 
-	int checksumErrors = 0;
+    int checksumErrors = 0;
 
-	EnvelopeReader input;
-	int count = 0;
+    EnvelopeReader input;
+    int count = 0;
 
-	while(dbg.isCharAvailable())
-	{
-		uint8_t byte = dbg.getChar();
+    while(dbg.isCharAvailable())
+    {
+        uint8_t byte = dbg.getChar();
 
-		if(++count == 5)
-			byte |= (1 << 3);
+        if(++count == 5)
+            byte |= (1 << 3);
 
-		EnvelopeReader::TakeResult ret = input.take(byte);
+        EnvelopeReader::TakeResult ret = input.take(byte);
 
-		switch(ret)
-		{
-			case EnvelopeReader::NEW_MESSAGE:
-				FAIL("Got message even though it was corrupted");
-				break;
-			case EnvelopeReader::NEED_MORE_DATA:
-				break;
-			case EnvelopeReader::CHECKSUM_ERROR:
-				checksumErrors++;
-				break;
-			case EnvelopeReader::FRAME_ERROR:
-				FAIL("Frame error");
-				break;
-			default:
-				FAIL("Unknown error");
-				break;
-		}
-	}
+        switch(ret)
+        {
+            case EnvelopeReader::NEW_MESSAGE:
+                FAIL("Got message even though it was corrupted");
+                break;
+            case EnvelopeReader::NEED_MORE_DATA:
+                break;
+            case EnvelopeReader::CHECKSUM_ERROR:
+                checksumErrors++;
+                break;
+            case EnvelopeReader::FRAME_ERROR:
+                FAIL("Frame error");
+                break;
+            default:
+                FAIL("Unknown error");
+                break;
+        }
+    }
 
-	REQUIRE(checksumErrors == 1);
+    REQUIRE(checksumErrors == 1);
 }

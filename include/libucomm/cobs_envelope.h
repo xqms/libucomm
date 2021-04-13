@@ -36,159 +36,159 @@ template<class ChecksumGenerator, class WriterType = BufferedWriter>
 class COBSWriter
 {
 public:
-	class Reader
-	{
-	};
+    class Reader
+    {
+    };
 
-	/**
-	 * @brief Constructor
-	 *
-	 * @param writer Pointer to the writer instance we will use to output packet
-	 *   bytes.
-	 **/
-	COBSWriter(WriterType* writer);
+    /**
+     * @brief Constructor
+     *
+     * @param writer Pointer to the writer instance we will use to output packet
+     *   bytes.
+     **/
+    COBSWriter(WriterType* writer);
 
-	bool startEnvelope(uint8_t msg_code);
+    bool startEnvelope(uint8_t msg_code);
 
-	//! Implement the IO writer interface
-	bool write(const void* data, size_t size);
+    //! Implement the IO writer interface
+    bool write(const void* data, size_t size);
 
-	bool endEnvelope(bool terminate = true);
+    bool endEnvelope(bool terminate = true);
 
-	/**
-	 * @brief Write message
-	 *
-	 * Processes & outputs the message @a msg. This should be your main
-	 * interaction point with this class.
-	 *
-	 * @note For more options & error checking, use send().
-	 **/
-	template<class MSG>
-	COBSWriter<ChecksumGenerator, WriterType>& operator<< (const MSG& msg);
+    /**
+     * @brief Write message
+     *
+     * Processes & outputs the message @a msg. This should be your main
+     * interaction point with this class.
+     *
+     * @note For more options & error checking, use send().
+     **/
+    template<class MSG>
+    COBSWriter<ChecksumGenerator, WriterType>& operator<< (const MSG& msg);
 
-	/**
-	 * @brief Write message
-	 *
-	 * Processes & outputs the message @a msg. This should be your main
-	 * interaction point with this class.
-	 *
-	 * @param terminate If this is false, the system will not send the final
-	 *   zero byte. You can do this if you immediately follow up with the
-	 *   next packet.
-	 * @return true on success
-	 **/
-	template<class MSG>
-	bool send(const MSG& msg, bool terminate = true);
+    /**
+     * @brief Write message
+     *
+     * Processes & outputs the message @a msg. This should be your main
+     * interaction point with this class.
+     *
+     * @param terminate If this is false, the system will not send the final
+     *   zero byte. You can do this if you immediately follow up with the
+     *   next packet.
+     * @return true on success
+     **/
+    template<class MSG>
+    bool send(const MSG& msg, bool terminate = true);
 private:
-	//! Write byte and add it to the checksum
-	bool writeAndChecksum(uint8_t c);
+    //! Write byte and add it to the checksum
+    bool writeAndChecksum(uint8_t c);
 
-	//! Finish the current COBS block
-	bool finishBlock(uint8_t code);
+    //! Finish the current COBS block
+    bool finishBlock(uint8_t code);
 
-	WriterType* m_writer;
-	ChecksumGenerator m_checksum;
-	uint8_t m_code;
-	uint8_t* m_codePtr;
-	uint8_t* m_dstPtr;
-	uint8_t* m_dstEnd;
+    WriterType* m_writer;
+    ChecksumGenerator m_checksum;
+    uint8_t m_code;
+    uint8_t* m_codePtr;
+    uint8_t* m_dstPtr;
+    uint8_t* m_dstEnd;
 };
 
 template<class ChecksumGenerator, int MaxPacketSize>
 class COBSReader
 {
 public:
-	typedef typename IntForSize<MaxPacketSize>::Type SizeType;
+    typedef typename IntForSize<MaxPacketSize>::Type SizeType;
 
-	class Reader
-	{
-	public:
-		Reader();
-		Reader(COBSReader* envReader);
+    class Reader
+    {
+    public:
+        Reader();
+        Reader(COBSReader* envReader);
 
-		// Implement IO::Reader interface
-		bool read(void* data, size_t size);
-		bool skip(size_t size);
-	private:
-		COBSReader* m_envReader;
-		SizeType m_idx;
-	};
+        // Implement IO::Reader interface
+        bool read(void* data, size_t size);
+        bool skip(size_t size);
+    private:
+        COBSReader* m_envReader;
+        SizeType m_idx;
+    };
 
-	friend class Reader;
+    friend class Reader;
 
-	COBSReader();
+    COBSReader();
 
-	//! Possible take() return codes
-	enum TakeResult
-	{
-		NEW_MESSAGE,      //!< New message available, use msgCode() + read()
-		NEED_MORE_DATA,   //!< Message not yet finished (this is the default)
-		CHECKSUM_ERROR,   //!< There was a checksum error in the current packet
-		FRAME_ERROR       //!< The current packet was not correctly framed
-	};
+    //! Possible take() return codes
+    enum TakeResult
+    {
+        NEW_MESSAGE,      //!< New message available, use msgCode() + read()
+        NEED_MORE_DATA,   //!< Message not yet finished (this is the default)
+        CHECKSUM_ERROR,   //!< There was a checksum error in the current packet
+        FRAME_ERROR       //!< The current packet was not correctly framed
+    };
 
-	/**
-	 * Handle a byte of wire data.
-	 *
-	 * @return Status code, see TakeResult.
-	 **/
-	TakeResult take(uint8_t c);
+    /**
+     * Handle a byte of wire data.
+     *
+     * @return Status code, see TakeResult.
+     **/
+    TakeResult take(uint8_t c);
 
-	/**
-	 * If take() returned NEW_MESSAGE, you can use this method to query the
-	 * code of the last decoded message.
-	 **/
-	uint8_t msgCode() const
-	{ return m_msgCode; }
+    /**
+     * If take() returned NEW_MESSAGE, you can use this method to query the
+     * code of the last decoded message.
+     **/
+    uint8_t msgCode() const
+    { return m_msgCode; }
 
-	/**
-	 * Deserialize the last message. Take care to check msgCode()!
-	 *
-	 * @note Better use read() and check the return value.
-	 **/
-	template<class MSG>
-	COBSReader<ChecksumGenerator, MaxPacketSize>& operator>>(MSG& msg)
-	{
-		Reader reader = makeReader();
-		msg.deserialize(&reader);
+    /**
+     * Deserialize the last message. Take care to check msgCode()!
+     *
+     * @note Better use read() and check the return value.
+     **/
+    template<class MSG>
+    COBSReader<ChecksumGenerator, MaxPacketSize>& operator>>(MSG& msg)
+    {
+        Reader reader = makeReader();
+        msg.deserialize(&reader);
 
-		return *this;
-	}
+        return *this;
+    }
 
-	/**
-	 * Deserialize the last message. Take care to check msgCode()!
-	 *
-	 * @return true on success.
-	 **/
-	template<class MSG>
-	bool read(MSG* msg)
-	{
-		Reader reader = makeReader();
-		return msg->deserialize(&reader);
-	}
+    /**
+     * Deserialize the last message. Take care to check msgCode()!
+     *
+     * @return true on success.
+     **/
+    template<class MSG>
+    bool read(MSG* msg)
+    {
+        Reader reader = makeReader();
+        return msg->deserialize(&reader);
+    }
 private:
-	enum State
-	{
-		STATE_START,
-		STATE_MSG_CODE,
-		STATE_COBS_CODE,
-		STATE_COBS_DATA
-	};
+    enum State
+    {
+        STATE_START,
+        STATE_MSG_CODE,
+        STATE_COBS_CODE,
+        STATE_COBS_DATA
+    };
 
-	inline Reader makeReader()
-	{ return Reader(this); }
+    inline Reader makeReader()
+    { return Reader(this); }
 
-	//! Check if decoded data is a complete & valid packet
-	TakeResult finish();
+    //! Check if decoded data is a complete & valid packet
+    TakeResult finish();
 
-	uint8_t m_state;
-	uint8_t m_msgCode;
-	uint8_t m_buffer[MaxPacketSize];
-	SizeType m_idx;
-	uint8_t m_cobsCode;
-	uint8_t m_cobsLength;
+    uint8_t m_state;
+    uint8_t m_msgCode;
+    uint8_t m_buffer[MaxPacketSize];
+    SizeType m_idx;
+    uint8_t m_cobsCode;
+    uint8_t m_cobsLength;
 
-	ChecksumGenerator m_generator;
+    ChecksumGenerator m_generator;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -203,82 +203,82 @@ COBSWriter<ChecksumGenerator, WriterType>::COBSWriter(WriterType* writer)
 template<class ChecksumGenerator, class WriterType>
 bool COBSWriter<ChecksumGenerator, WriterType>::startEnvelope(uint8_t msg_code)
 {
-	m_dstPtr = m_writer->dataPointer();
-	m_dstEnd = m_dstPtr + m_writer->dataSize();
+    m_dstPtr = m_writer->dataPointer();
+    m_dstEnd = m_dstPtr + m_writer->dataSize();
 
-	if(m_dstPtr + 2 >= m_dstEnd)
-		return false;
+    if(m_dstPtr + 2 >= m_dstEnd)
+        return false;
 
-	m_checksum.reset();
+    m_checksum.reset();
 
-	if(msg_code >= 255)
-		return false;
+    if(msg_code >= 255)
+        return false;
 
-	*m_dstPtr++ = 0x00;
+    *m_dstPtr++ = 0x00;
 
-	RETURN_IF_ERROR(writeAndChecksum(msg_code + 1));
+    RETURN_IF_ERROR(writeAndChecksum(msg_code + 1));
 
-	// Init COBS (if we get a zero, this is the first code)
-	m_code = 0x01;
+    // Init COBS (if we get a zero, this is the first code)
+    m_code = 0x01;
 
-	// Reserve a byte for the code
-	m_codePtr = m_dstPtr++;
+    // Reserve a byte for the code
+    m_codePtr = m_dstPtr++;
 
-	return true;
+    return true;
 }
 
 template<class ChecksumGenerator, class WriterType>
 bool COBSWriter<ChecksumGenerator, WriterType>::write(const void* data, size_t size)
 {
-	const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data);
-	const uint8_t* end = ptr + size;
+    const uint8_t* ptr = reinterpret_cast<const uint8_t*>(data);
+    const uint8_t* end = ptr + size;
 
-	while(ptr != end)
-	{
-		if(*ptr == 0x00)
-		{
-			m_checksum.add(0x00);
-			RETURN_IF_ERROR(finishBlock(m_code));
-		}
-		else
-		{
-			RETURN_IF_ERROR(writeAndChecksum(*ptr));
-			if(++m_code == 0xFF)
-				RETURN_IF_ERROR(finishBlock(m_code));
-		}
+    while(ptr != end)
+    {
+        if(*ptr == 0x00)
+        {
+            m_checksum.add(0x00);
+            RETURN_IF_ERROR(finishBlock(m_code));
+        }
+        else
+        {
+            RETURN_IF_ERROR(writeAndChecksum(*ptr));
+            if(++m_code == 0xFF)
+                RETURN_IF_ERROR(finishBlock(m_code));
+        }
 
-		ptr++;
-	}
+        ptr++;
+    }
 
-	return true;
+    return true;
 }
 
 template<class ChecksumGenerator, class WriterType>
 bool COBSWriter<ChecksumGenerator, WriterType>::endEnvelope(bool terminate)
 {
-	typename ChecksumGenerator::SumType sum = m_checksum.value();
+    typename ChecksumGenerator::SumType sum = m_checksum.value();
 
-	// Write the checksum
-	RETURN_IF_ERROR(write(&sum, sizeof(sum)));
+    // Write the checksum
+    RETURN_IF_ERROR(write(&sum, sizeof(sum)));
 
-	// Finish the last COBS block
-	RETURN_IF_ERROR(finishBlock(m_code));
+    // Finish the last COBS block
+    RETURN_IF_ERROR(finishBlock(m_code));
 
-	// m_dstPtr points now past the last data byte plus an empty space
-	// where the next COBS code would be.
-	m_dstPtr--;
+    // m_dstPtr points now past the last data byte plus an empty space
+    // where the next COBS code would be.
+    m_dstPtr--;
 
-	// Append a zero (this starts the receive handler immediately)
-	if(terminate)
-	{
-		if(m_dstPtr == m_dstEnd)
-			return false;
-		*m_dstPtr++ = 0x00;
-	}
+    // Append a zero (this starts the receive handler immediately)
+    if(terminate)
+    {
+        if(m_dstPtr == m_dstEnd)
+            return false;
+        *m_dstPtr++ = 0x00;
+    }
 
-	m_writer->packetComplete(m_dstPtr - m_writer->dataPointer());
+    m_writer->packetComplete(m_dstPtr - m_writer->dataPointer());
 
-	return true;
+    return true;
 }
 
 template<class ChecksumGenerator, class WriterType>
@@ -286,43 +286,45 @@ template<class MSG>
 COBSWriter<ChecksumGenerator, WriterType>&
 COBSWriter<ChecksumGenerator, WriterType>::operator<<(const MSG& msg)
 {
-	send(msg);
-	return *this;
+    send(msg);
+    return *this;
 }
 
 template<class ChecksumGenerator, class WriterType>
 template<class MSG>
 bool COBSWriter<ChecksumGenerator, WriterType>::send(const MSG& msg, bool terminate)
 {
-	RETURN_IF_ERROR(startEnvelope(MSG::MSG_CODE));
-	RETURN_IF_ERROR(msg.serialize(this));
-	RETURN_IF_ERROR(endEnvelope(terminate));
+    RETURN_IF_ERROR(startEnvelope(MSG::MSG_CODE));
+    RETURN_IF_ERROR(msg.serialize(this));
+    RETURN_IF_ERROR(endEnvelope(terminate));
+
+    return true;
 }
 
 template<class ChecksumGenerator, class WriterType>
 bool COBSWriter<ChecksumGenerator, WriterType>::writeAndChecksum(uint8_t c)
 {
-	m_checksum.add(c);
+    m_checksum.add(c);
 
-	if(m_dstPtr == m_dstEnd)
-		return false;
+    if(m_dstPtr == m_dstEnd)
+        return false;
 
-	*m_dstPtr++ = c;
-	return true;
+    *m_dstPtr++ = c;
+    return true;
 }
 
 template<class ChecksumGenerator, class WriterType>
 bool COBSWriter<ChecksumGenerator, WriterType>::finishBlock(uint8_t code)
 {
-	*m_codePtr = code;
+    *m_codePtr = code;
 
-	if(m_dstPtr == m_dstEnd)
-		return false;
-	m_codePtr = m_dstPtr++;
+    if(m_dstPtr == m_dstEnd)
+        return false;
+    m_codePtr = m_dstPtr++;
 
-	m_code = 0x01;
+    m_code = 0x01;
 
-	return true;
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -342,24 +344,24 @@ COBSReader<ChecksumGenerator, MaxPacketSize>::Reader::Reader(COBSReader* envRead
 template<class ChecksumGenerator, int MaxPacketSize>
 bool COBSReader<ChecksumGenerator, MaxPacketSize>::Reader::read(void* data, size_t size)
 {
-	if(m_idx + size > m_envReader->m_idx)
-		return false;
+    if(m_idx + size > m_envReader->m_idx)
+        return false;
 
-	memcpy(data, m_envReader->m_buffer + m_idx, size);
-	m_idx += size;
+    memcpy(data, m_envReader->m_buffer + m_idx, size);
+    m_idx += size;
 
-	return true;
+    return true;
 }
 
 template<class ChecksumGenerator, int MaxPacketSize>
 bool COBSReader<ChecksumGenerator, MaxPacketSize>::Reader::skip(size_t size)
 {
-	if(m_idx + size > m_envReader->m_idx)
-		return false;
+    if(m_idx + size > m_envReader->m_idx)
+        return false;
 
-	m_idx += size;
+    m_idx += size;
 
-	return true;
+    return true;
 }
 
 template<class ChecksumGenerator, int MaxPacketSize>
@@ -372,113 +374,113 @@ template<class ChecksumGenerator, int MaxPacketSize>
 typename COBSReader<ChecksumGenerator, MaxPacketSize>::TakeResult
 COBSReader<ChecksumGenerator, MaxPacketSize>::take(uint8_t c)
 {
-	switch(m_state)
-	{
-		case STATE_START:
-			if(c == 0x00)
-				m_state = STATE_MSG_CODE;
-			break;
-		case STATE_MSG_CODE:
-			if(c != 0x00)
-			{
-				m_msgCode = c - 1;
-				m_idx = 0;
-				m_state = STATE_COBS_CODE;
-			}
-			break;
-		case STATE_COBS_CODE:
-			if(c == 0x00)
-				return finish();
+    switch(m_state)
+    {
+        case STATE_START:
+            if(c == 0x00)
+                m_state = STATE_MSG_CODE;
+            break;
+        case STATE_MSG_CODE:
+            if(c != 0x00)
+            {
+                m_msgCode = c - 1;
+                m_idx = 0;
+                m_state = STATE_COBS_CODE;
+            }
+            break;
+        case STATE_COBS_CODE:
+            if(c == 0x00)
+                return finish();
 
-			if(c == 0x01)
-			{
-				if(m_idx == MaxPacketSize)
-				{
-					m_state = STATE_START;
-					break;
-				}
+            if(c == 0x01)
+            {
+                if(m_idx == MaxPacketSize)
+                {
+                    m_state = STATE_START;
+                    break;
+                }
 
-				m_buffer[m_idx++] = 0x00;
-			}
-			else
-			{
-				m_cobsCode = c;
-				m_cobsLength = c - 1;
-				m_state = STATE_COBS_DATA;
-			}
-			break;
-		case STATE_COBS_DATA:
-			if(c == 0x00)
-				return finish();
+                m_buffer[m_idx++] = 0x00;
+            }
+            else
+            {
+                m_cobsCode = c;
+                m_cobsLength = c - 1;
+                m_state = STATE_COBS_DATA;
+            }
+            break;
+        case STATE_COBS_DATA:
+            if(c == 0x00)
+                return finish();
 
-			if(m_idx == MaxPacketSize)
-			{
-				m_state = STATE_START;
-				break;
-			}
+            if(m_idx == MaxPacketSize)
+            {
+                m_state = STATE_START;
+                break;
+            }
 
-			m_buffer[m_idx++] = c;
+            m_buffer[m_idx++] = c;
 
-			if(--m_cobsLength == 0)
-			{
-				if(m_cobsCode != 0xFF)
-				{
-					if(m_idx == MaxPacketSize)
-					{
-						m_state = STATE_START;
-						break;
-					}
+            if(--m_cobsLength == 0)
+            {
+                if(m_cobsCode != 0xFF)
+                {
+                    if(m_idx == MaxPacketSize)
+                    {
+                        m_state = STATE_START;
+                        break;
+                    }
 
-					m_buffer[m_idx++] = 0x00;
-				}
+                    m_buffer[m_idx++] = 0x00;
+                }
 
-				m_state = STATE_COBS_CODE;
-			}
-			break;
-	}
+                m_state = STATE_COBS_CODE;
+            }
+            break;
+    }
 
-	return NEED_MORE_DATA;
+    return NEED_MORE_DATA;
 }
 
 template<class ChecksumGenerator, int MaxPacketSize>
 typename COBSReader<ChecksumGenerator, MaxPacketSize>::TakeResult
 COBSReader<ChecksumGenerator, MaxPacketSize>::finish()
 {
-	// Precondition: we just received a 0x00 byte. So the next state
-	// *must* be STATE_MSG_CODE.
+    // Precondition: we just received a 0x00 byte. So the next state
+    // *must* be STATE_MSG_CODE.
 
-	if(m_idx < sizeof(typename ChecksumGenerator::SumType) + 1)
-	{
-		m_state = STATE_MSG_CODE;
-		return FRAME_ERROR; // Short packet
-	}
+    if(m_idx < sizeof(typename ChecksumGenerator::SumType) + 1)
+    {
+        m_state = STATE_MSG_CODE;
+        return FRAME_ERROR; // Short packet
+    }
 
-	// Remove the trailing zero introduced by COBS
-	m_idx--;
+    // Remove the trailing zero introduced by COBS
+    m_idx--;
 
-	// Check if the checksum matches
-	m_generator.reset();
-	m_generator.add(m_msgCode+1);
+    // Check if the checksum matches
+    m_generator.reset();
+    m_generator.add(m_msgCode+1);
 
-	for(SizeType i = 0; i < m_idx - sizeof(typename ChecksumGenerator::SumType); ++i)
-		m_generator.add(m_buffer[i]);
+    for(SizeType i = 0; i < m_idx - sizeof(typename ChecksumGenerator::SumType); ++i)
+        m_generator.add(m_buffer[i]);
 
-	const typename ChecksumGenerator::SumType* sum =
-		reinterpret_cast<typename ChecksumGenerator::SumType*>(
-			&m_buffer[m_idx - sizeof(typename ChecksumGenerator::SumType)]
-		);
+    const typename ChecksumGenerator::SumType* sum =
+        reinterpret_cast<typename ChecksumGenerator::SumType*>(
+            &m_buffer[m_idx - sizeof(typename ChecksumGenerator::SumType)]
+        );
 
-	if(m_generator.value() != *sum)
-	{
-		m_state = STATE_MSG_CODE;
-		return CHECKSUM_ERROR;
-	}
+    if(m_generator.value() != *sum)
+    {
+        m_state = STATE_MSG_CODE;
+        return CHECKSUM_ERROR;
+    }
 
-	// Remove checksum
-	m_idx -= sizeof(typename ChecksumGenerator::SumType);
+    // Remove checksum
+    m_idx -= sizeof(typename ChecksumGenerator::SumType);
 
-	m_state = STATE_MSG_CODE;
-	return NEW_MESSAGE;
+    m_state = STATE_MSG_CODE;
+    return NEW_MESSAGE;
 }
 
 }

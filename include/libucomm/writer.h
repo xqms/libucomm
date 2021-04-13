@@ -20,30 +20,30 @@ namespace uc
 class CharWriter
 {
 public:
-	/**
-	 * Write a single character.
-	 *
-	 * @return true on success
-	 **/
-	virtual bool writeChar(uint8_t c) = 0;
+    /**
+     * Write a single character.
+     *
+     * @return true on success
+     **/
+    virtual bool writeChar(uint8_t c) = 0;
 
-	/**
-	 * Called when a packet is complete. You may want to buffer the byte writes
-	 * until this method is called, if your underlying system supports batch
-	 * writes.
-	 **/
-	virtual void flush() = 0;
+    /**
+     * Called when a packet is complete. You may want to buffer the byte writes
+     * until this method is called, if your underlying system supports batch
+     * writes.
+     **/
+    virtual void flush() = 0;
 };
 
 class BufferedWriter
 {
 public:
-	typedef size_t SizeType;
+    typedef size_t SizeType;
 
-	virtual uint8_t* dataPointer() = 0;
-	virtual SizeType dataSize() const = 0;
+    virtual uint8_t* dataPointer() = 0;
+    virtual SizeType dataSize() const = 0;
 
-	virtual void packetComplete(SizeType n);
+    virtual void packetComplete(SizeType n);
 
 };
 

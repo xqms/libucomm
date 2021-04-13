@@ -7,5 +7,5 @@ libucomm_wrap_msg(TEST_MSGS test.msg)
 add_executable(test_example test.cpp ${TEST_MSGS})
 
 if(BUILD_AVR_EXAMPLE)
-	add_subdirectory(avr)
+    add_subdirectory(avr)
 endif()

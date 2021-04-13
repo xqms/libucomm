@@ -9,7 +9,7 @@ namespace uc
 
 #if 1
 #define RETURN_IF_ERROR(code) \
-	do { if(!(code)) return false; } while (0)
+    do { if(!(code)) return false; } while (0)
 #else
 #define RETURN_IF_ERROR(code) code
 #endif

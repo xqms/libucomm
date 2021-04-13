@@ -7,15 +7,15 @@ set(LIBUCOMM_VERSION 0.1)
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-	"${CMAKE_CURRENT_BINARY_DIR}/cmake/libucommConfigVersion.cmake"
-	VERSION ${LIBUCOMM_VERSION}
-	COMPATIBILITY AnyNewerVersion
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/libucommConfigVersion.cmake"
+    VERSION ${LIBUCOMM_VERSION}
+    COMPATIBILITY AnyNewerVersion
 )
 
 configure_file(
-	cmake/libucommConfig.cmake.in
-	"${CMAKE_CURRENT_BINARY_DIR}/cmake/libucommConfig.cmake"
-	COPYONLY
+    cmake/libucommConfig.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/libucommConfig.cmake"
+    COPYONLY
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -35,19 +35,19 @@ include_directories(include)
 
 set(BUILD_EXAMPLES ON CACHE BOOL "Enable examples")
 if(BUILD_EXAMPLES)
-	add_subdirectory(examples)
+    add_subdirectory(examples)
 endif()
 
 set(ENABLE_TESTS ON CACHE BOOL "Enable tests")
 if(ENABLE_TESTS)
-	enable_testing()
-	add_subdirectory(tests)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 install(DIRECTORY include/ DESTINATION include)
 install(PROGRAMS libucomm_parse.py DESTINATION bin)
 install(FILES
-	${PROJECT_BINARY_DIR}/cmake/libucommConfig.cmake
-	${PROJECT_BINARY_DIR}/cmake/libucommConfigVersion.cmake
-	cmake/libucomm.cmake
-	DESTINATION share/cmake/libucomm)
+    ${PROJECT_BINARY_DIR}/cmake/libucommConfig.cmake
+    ${PROJECT_BINARY_DIR}/cmake/libucommConfigVersion.cmake
+    cmake/libucomm.cmake
+    DESTINATION share/cmake/libucomm)

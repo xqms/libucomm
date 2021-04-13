@@ -14,52 +14,52 @@ template<>
 class TypeForBytes<0>
 {
 public:
-	typedef uint8_t Type;
+    typedef uint8_t Type;
 };
 template<>
 class TypeForBytes<1>
 {
 public:
-	typedef uint8_t Type;
+    typedef uint8_t Type;
 };
 template<>
 class TypeForBytes<2>
 {
 public:
-	typedef uint16_t Type;
+    typedef uint16_t Type;
 };
 template<>
 class TypeForBytes<3>
 {
 public:
-	typedef uint32_t Type;
+    typedef uint32_t Type;
 };
 template<>
 class TypeForBytes<4>
 {
 public:
-	typedef uint32_t Type;
+    typedef uint32_t Type;
 };
 
 template<int Size, int Acc>
 class DoIntForSize
 {
 public:
-	typedef typename DoIntForSize<Size / 256, Acc+1>::Type Type;
+    typedef typename DoIntForSize<Size / 256, Acc+1>::Type Type;
 };
 
 template<int Acc>
 class DoIntForSize<0, Acc>
 {
 public:
-	typedef typename TypeForBytes<Acc>::Type Type;
+    typedef typename TypeForBytes<Acc>::Type Type;
 };
 
 template<int Size>
 class IntForSize
 {
 public:
-	typedef typename DoIntForSize<Size, 0>::Type Type;
+    typedef typename DoIntForSize<Size, 0>::Type Type;
 };
 
 }
