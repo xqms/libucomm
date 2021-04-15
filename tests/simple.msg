@@ -9,4 +9,5 @@ msg Message
 {
     uint8_t flags;
     Struct list[];
+    Struct fixed_list[3];
 };

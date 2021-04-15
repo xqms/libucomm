@@ -38,6 +38,11 @@ TEST_CASE("simple_cobs", "[cobs]")
     WProto::Message pkt;
     pkt.flags = 0;
     pkt.list.setCallback(fillStruct, 4);
+    for(int i = 0; i < 3; ++i)
+    {
+        pkt.fixed_list[i].index = 10 + i;
+        pkt.fixed_list[i].some_value = 5*i;
+    }
 
     BufferIO dbg;
     EnvelopeWriter output(&dbg);
@@ -71,6 +76,12 @@ TEST_CASE("simple_cobs", "[cobs]")
                 }
 
                 REQUIRE(i == 4);
+
+                for(int i = 0; i < 3; ++i)
+                {
+                    CHECK(pkt2.fixed_list[i].index == 10 + i);
+                    CHECK(pkt2.fixed_list[i].some_value == 5*i);
+                }
 
                 packetCount++;
                 break;

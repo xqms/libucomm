@@ -4,6 +4,8 @@
 #ifndef LIBUCOMM_LIST_H
 #define LIBUCOMM_LIST_H
 
+#include <type_traits>
+
 #include <stdint.h>
 #include "io.h"
 #include "util/integers.h"
@@ -43,8 +45,15 @@ public:
 
         if(!IOI::IsLast)
         {
-            for(SizeType i = m_count; i; --i)
-                RETURN_IF_ERROR(reader->skip(T::POD_SIZE));
+            if constexpr(std::is_integral_v<T>)
+            {
+                RETURN_IF_ERROR(reader->skip(sizeof(T)*m_count));
+            }
+            else
+            {
+                for(SizeType i = m_count; i; --i)
+                    RETURN_IF_ERROR(reader->skip(T::POD_SIZE));
+            }
         }
 
         return true;
@@ -57,7 +66,10 @@ public:
 
         m_count--;
 
-        return dest->deserialize(&m_reader);
+        if constexpr(std::is_integral_v<T>)
+            return m_reader.read(dest, sizeof(T));
+        else
+            return dest->deserialize(&m_reader);
     }
 private:
     SizeType m_count;
@@ -97,8 +109,17 @@ public:
 
         if(m_mode == MODE_DIRECT_DATA)
         {
-            for(SizeType i = 0; i != m_count; ++i)
-                RETURN_IF_ERROR(m_data[i].serialize(writer));
+            if constexpr (std::is_integral_v<T>)
+            {
+                RETURN_IF_ERROR(
+                    writer->write(m_data, sizeof(T)*m_count)
+                );
+            }
+            else
+            {
+                for(SizeType i = 0; i != m_count; ++i)
+                    RETURN_IF_ERROR(m_data[i].serialize(writer));
+            }
         }
         else if(m_mode == MODE_CALLBACK)
         {
@@ -106,7 +127,15 @@ public:
             for(SizeType i = 0; i != m_count; ++i)
             {
                 RETURN_IF_ERROR(m_callback(&buf, i));
-                RETURN_IF_ERROR(buf.serialize(writer));
+
+                if constexpr (std::is_integral_v<T>)
+                {
+                    RETURN_IF_ERROR(
+                        writer->write(&buf, sizeof(T))
+                    );
+                }
+                else
+                    RETURN_IF_ERROR(buf.serialize(writer));
             }
         }
 

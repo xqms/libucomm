@@ -64,9 +64,12 @@ class Member:
 
     def definition(self, last=False):
         if self.array:
+            if self.type not in BUILTIN_TYPES and not self.type.isPOD():
+                raise RuntimeError("Arrays of non-POD structs are not allowed")
+
             if self.array_size:
                 # Known array size
-                return str(self.type) + " " + self.name + "[" + self.array_size + "];"
+                return str(self.type) + " " + self.name + "[" + self.array_size + "] = {};"
             else:
                 # Dynamic array
                 last = str(last).lower()
@@ -74,7 +77,7 @@ class Member:
                     last, self.type, self.name
                 )
         else:
-            return str(self.type) + " " + self.name + ";"
+            return str(self.type) + " " + self.name + "{0};"
 
     def resolveType(self, types):
         if self.type in BUILTIN_TYPES:
@@ -92,7 +95,7 @@ class Member:
 
         if parse_result.array:
             array = True
-            array_size = parse_result.array.size
+            array_size = parse_result.size
 
         return cls(parse_result.type, parse_result.name, array, array_size)
 registerParseAction(Member)

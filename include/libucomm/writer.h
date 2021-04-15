@@ -43,7 +43,7 @@ public:
     virtual uint8_t* dataPointer() = 0;
     virtual SizeType dataSize() const = 0;
 
-    virtual void packetComplete(SizeType n);
+    virtual void packetComplete(SizeType n) = 0;
 
 };
 

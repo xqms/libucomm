@@ -1,8 +1,10 @@
-;// Envelope format using COBS (consistent overhead byte stuffing)
+// Envelope format using COBS (consistent overhead byte stuffing)
 // Author: Max Schwarz <max.schwarz@online.de>
 
 #ifndef LIBUCOMM_COBS_ENVELOPE_H
 #define LIBUCOMM_COBS_ENVELOPE_H
+
+#include <cstring>
 
 #include <stdint.h>
 #include <string.h>
@@ -465,12 +467,10 @@ COBSReader<ChecksumGenerator, MaxPacketSize>::finish()
     for(SizeType i = 0; i < m_idx - sizeof(typename ChecksumGenerator::SumType); ++i)
         m_generator.add(m_buffer[i]);
 
-    const typename ChecksumGenerator::SumType* sum =
-        reinterpret_cast<typename ChecksumGenerator::SumType*>(
-            &m_buffer[m_idx - sizeof(typename ChecksumGenerator::SumType)]
-        );
+    typename ChecksumGenerator::SumType sum;
+    std::memcpy(&sum, &m_buffer[m_idx - sizeof(typename ChecksumGenerator::SumType)], sizeof(sum));
 
-    if(m_generator.value() != *sum)
+    if(m_generator.value() != sum)
     {
         m_state = STATE_MSG_CODE;
         return CHECKSUM_ERROR;
